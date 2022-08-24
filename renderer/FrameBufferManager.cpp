@@ -69,8 +69,6 @@ void FrameBufferManager::Shutdown() {
 FrameBuffer * FrameBufferManager::CreateFromGenerator( const idStr &name, Generator generator ) {
 	for (auto fbo : fbos) {
 		if (name == fbo->Name()) {
-			fbo->Destroy();
-			fbo->SetGenerator( generator );
 			return fbo;
 		}
 	}

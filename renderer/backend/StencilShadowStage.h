@@ -15,7 +15,6 @@ Project: The Dark Mod (http://www.thedarkmod.com/)
 #pragma once
 #include "../tr_local.h"
 #include "DrawBatchExecutor.h"
-#include "../TiledCustomMipmapStage.h"
 
 class StencilShadowStage {
 public:
@@ -26,17 +25,11 @@ public:
 
 	void DrawStencilShadows( viewLight_t *vLight, const drawSurf_t *shadowSurfs );
 
-	void FillStencilShadowMipmaps( const idScreenRect &lightScissor );
-
 private:
 	struct ShaderParams;
-
-	void DrawSurfs(const drawSurf_t **surfs, size_t count);
-	void ShutdownMipmaps();
 
 	DrawBatchExecutor *drawBatchExecutor = nullptr;
 	GLSLProgram *stencilShadowShader = nullptr;
 
-public:
-	TiledCustomMipmapStage stencilShadowMipmap;
+	void DrawSurfs(const drawSurf_t **surfs, size_t count);
 };

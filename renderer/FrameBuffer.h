@@ -21,7 +21,6 @@ public:
 	// do not use directly, use FrameBufferManager::CreateFromGenerator
 	FrameBuffer(const idStr &name, const Generator &generator);
 	~FrameBuffer();
-	void SetGenerator(const Generator &generator);
 
 	void Init(int width, int height, int msaa = 1);
 	void Destroy();

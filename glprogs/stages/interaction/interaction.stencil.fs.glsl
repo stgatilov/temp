@@ -14,8 +14,6 @@ Project: The Dark Mod (http://www.thedarkmod.com/)
 ******************************************************************************/
 #version 330 core
 
-out vec4 FragColor;
-
 #pragma tdm_include "tdm_utils.glsl"
 #pragma tdm_include "stages/interaction/interaction.common.fs.glsl"
 #pragma tdm_include "tdm_shadowstencilsoft.glsl"
@@ -23,9 +21,7 @@ out vec4 FragColor;
 uniform usampler2D u_stencilTexture;
 uniform sampler2D u_depthTexture;
 
-uniform sampler2D u_stencilMipmapsTexture;
-uniform ivec2 u_stencilMipmapsLevel;
-uniform vec4 u_stencilMipmapsScissor;
+out vec4 FragColor;
 
 void main() {
 	InteractionGeometry props;
@@ -39,8 +35,7 @@ void main() {
 			u_stencilTexture, u_depthTexture,
 			objectToLight, objectNormal,
 			params[var_DrawId].modelViewMatrix, u_projectionMatrix,
-			u_softShadowsQuality, u_softShadowsRadius, u_softShadowsSamples,
-			u_stencilMipmapsTexture, u_stencilMipmapsLevel, u_stencilMipmapsScissor
+			u_softShadowsQuality, u_softShadowsRadius, u_softShadowsSamples	
 		);
 	}
 	FragColor.a = 1.0;

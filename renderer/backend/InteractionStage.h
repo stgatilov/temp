@@ -17,7 +17,6 @@ Project: The Dark Mod (http://www.thedarkmod.com/)
 #include "DrawBatchExecutor.h"
 
 class GLSLProgram;
-class TiledCustomMipmapStage;
 
 class InteractionStage {
 public:
@@ -26,7 +25,7 @@ public:
 	void Init();
 	void Shutdown();
 
-	void DrawInteractions( viewLight_t *vLight, const drawSurf_t *interactionSurfs, const TiledCustomMipmapStage *stencilShadowMipmaps );
+	void DrawInteractions( viewLight_t *vLight, const drawSurf_t *interactionSurfs );
 
 private:
 	struct ShaderParams;
@@ -45,7 +44,7 @@ private:
 	idList<idVec2> poissonSamples;
 
 	void LoadInteractionShader(GLSLProgram *shader, const idStr &baseName);
-	void BindShadowTexture( const TiledCustomMipmapStage *stencilShadowMipmaps );
+	void BindShadowTexture();
 	void ChooseInteractionProgram( viewLight_t *vLight, bool translucent );
 	void ProcessSingleSurface( viewLight_t *vLight, const shaderStage_t *lightStage, const drawSurf_t *surf );
 	void PrepareDrawCommand( drawInteraction_t * inter );
