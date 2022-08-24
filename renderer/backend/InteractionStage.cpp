@@ -73,6 +73,9 @@ namespace {
 		DEFINE_UNIFORM( sampler, stencilTexture )
 		DEFINE_UNIFORM( sampler, depthTexture )
 		DEFINE_UNIFORM( sampler, shadowMap )
+		DEFINE_UNIFORM( ivec2, stencilMipmapsLevel )
+		DEFINE_UNIFORM( vec4, stencilMipmapsScissor )
+		DEFINE_UNIFORM( sampler, stencilMipmapsTexture )
 	};
 
 	enum TextureUnits {
@@ -87,6 +90,7 @@ namespace {
 		TU_SHADOW_MAP = 8,
 		TU_SHADOW_DEPTH = 9,
 		TU_SHADOW_STENCIL = 10,
+		TU_SHADOW_STENCIL_MIPMAPS = 11,
 	};
 }
 
@@ -101,6 +105,7 @@ void InteractionStage::LoadInteractionShader( GLSLProgram *shader, const idStr &
 	uniforms->lightFalloffTexture.Set( TU_LIGHT_FALLOFF );
 	uniforms->ssaoTexture.Set( TU_SSAO );
 	uniforms->stencilTexture.Set( TU_SHADOW_STENCIL );
+	uniforms->stencilMipmapsTexture.Set( TU_SHADOW_STENCIL_MIPMAPS );
 	uniforms->depthTexture.Set( TU_SHADOW_DEPTH );
 	uniforms->shadowMap.Set( TU_SHADOW_MAP );
 	uniforms->normalTexture.Set( TU_NORMAL );
@@ -137,7 +142,7 @@ void InteractionStage::Shutdown() {
 	poissonSamples.ClearFree();
 }
 
-void InteractionStage::DrawInteractions( viewLight_t *vLight, const drawSurf_t *interactionSurfs ) {
+void InteractionStage::DrawInteractions( viewLight_t *vLight, const drawSurf_t *interactionSurfs, const TiledCustomMipmapStage *stencilShadowMipmaps ) {
 	if ( !interactionSurfs ) {
 		return;
 	}
@@ -187,10 +192,29 @@ void InteractionStage::DrawInteractions( viewLight_t *vLight, const drawSurf_t *
 	vLight->falloffImage->Bind();
 
 	if ( r_softShadowsQuality.GetBool() && !backEnd.viewDef->IsLightGem() || vLight->shadows == LS_MAPS )
-		BindShadowTexture();
+		BindShadowTexture( stencilShadowMipmaps );
 
 	if( vLight->lightShader->IsAmbientLight() && ambientOcclusion->ShouldEnableForCurrentView() ) {
 		ambientOcclusion->BindSSAOTexture( TU_SSAO );
+	}
+
+	if ( stencilShadowMipmaps && stencilShadowMipmaps->IsFilled() ) {
+		GL_SelectTexture( TU_SHADOW_STENCIL_MIPMAPS );
+		stencilShadowMipmaps->BindMipmapTexture();
+		// note: correct level is evaluated when mipmaps object is created
+		int useLevel = stencilShadowMipmaps->GetMaxLevel();
+		int baseLevel = stencilShadowMipmaps->GetBaseLevel();
+		idScreenRect scissor = stencilShadowMipmaps->GetScissorAtLevel( useLevel );
+		uniforms->stencilMipmapsLevel.Set( useLevel, baseLevel );
+		uniforms->stencilMipmapsScissor.Set(
+			(scissor.x1 + 0.5f) * (1 << useLevel),
+			(scissor.y1 + 0.5f) * (1 << useLevel),
+			(scissor.x2 + 0.5f) * (1 << useLevel),
+			(scissor.y2 + 0.5f) * (1 << useLevel)
+		);
+	}
+	else {
+		uniforms->stencilMipmapsLevel.Set( -1, -1 );
 	}
 
 	const idMaterial	*lightShader = vLight->lightShader;
@@ -245,7 +269,7 @@ void InteractionStage::DrawInteractions( viewLight_t *vLight, const drawSurf_t *
 	GLSLProgram::Deactivate();
 }
 
-void InteractionStage::BindShadowTexture() {
+void InteractionStage::BindShadowTexture( const TiledCustomMipmapStage *stencilShadowMipmaps ) {
 	if ( backEnd.vLight->shadowMapIndex ) {
 		GL_SelectTexture( TU_SHADOW_MAP );
 		globalImages->shadowAtlas->Bind();
